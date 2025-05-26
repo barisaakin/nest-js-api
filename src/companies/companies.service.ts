@@ -1,13 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
-import {
-  EntityNotFoundException,
-  EntityAlreadyExistsException,
-  BusinessRuleViolationException,
-} from '../common/exceptions/business.exception';
-import { Prisma, Company, User } from '@prisma/client';
+import { Company, User } from '@prisma/client';
+import { PrismaErrorHandler } from '../common/errors/prisma-error.handler';
+import { EntityNotFoundException } from 'src/common/exceptions/business.exception';
 
 @Injectable()
 export class CompaniesService {
@@ -28,12 +25,7 @@ export class CompaniesService {
         },
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2002') {
-          throw new EntityAlreadyExistsException('Company', 'name');
-        }
-      }
-      throw error;
+      PrismaErrorHandler.handle(error);
     }
   }
 
@@ -60,7 +52,10 @@ export class CompaniesService {
     return company;
   }
 
-  public async update(id: number, updateCompanyDto: UpdateCompanyDto): Promise<Company & { users: User[] }> {
+  public async update(
+    id: number,
+    updateCompanyDto: UpdateCompanyDto,
+  ): Promise<Company & { users: User[] }> {
     try {
       return await this.prisma.company.update({
         where: { id },
@@ -70,25 +65,20 @@ export class CompaniesService {
         },
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2002') {
-          throw new EntityAlreadyExistsException('Company', 'name');
-        }
-      }
-      throw error;
+      PrismaErrorHandler.handle(error);
     }
   }
 
   public async remove(id: number): Promise<Company> {
     const company = await this.findOne(id);
-
-    if (company.users && company.users.length > 0) {
-      throw new BusinessRuleViolationException(
-        `Cannot delete company with ID ${id} because it has ${company.users.length} associated users`,
+  
+    if (company.users?.length > 0) {
+      throw new BadRequestException(
+        `Company cannot be deleted because it has ${company.users.length} related users.`,
       );
     }
-
-    return this.prisma.company.delete({
+    
+    return await this.prisma.company.delete({
       where: { id },
     });
   }

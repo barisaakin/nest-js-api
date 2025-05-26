@@ -3,11 +3,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Role, User, Company, Prisma } from '@prisma/client';
+import { PrismaErrorHandler } from '../common/errors/prisma-error.handler';
 import {
   EntityNotFoundException,
-  EntityAlreadyExistsException,
   InvalidRelationException,
-  BusinessRuleViolationException,
 } from '../common/exceptions/business.exception';
 
 @Injectable()
@@ -16,7 +15,7 @@ export class UsersService {
 
   public async create(createUserDto: CreateUserDto): Promise<User & { company: Company | null }> {
     try {
-      const { email, firstName, lastName, role = Role.USER, companyId } = createUserDto;
+      const { email, firstName, lastName, companyId } = createUserDto;
 
       if (companyId) {
         const company = await this.prisma.company.findUnique({
@@ -24,7 +23,7 @@ export class UsersService {
         });
 
         if (!company) {
-          throw new InvalidRelationException('User', 'Company');
+          throw new InvalidRelationException(`Company with ID ${companyId} not found`);
         }
       }
 
@@ -32,8 +31,7 @@ export class UsersService {
         email,
         firstName,
         lastName,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        role,
+        role: Role.USER,
         company: companyId
           ? {
               connect: { id: companyId },
@@ -48,12 +46,7 @@ export class UsersService {
         },
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2002') {
-          throw new EntityAlreadyExistsException('User', 'email');
-        }
-      }
-      throw error;
+      PrismaErrorHandler.handle(error);
     }
   }
 
@@ -91,7 +84,9 @@ export class UsersService {
         });
 
         if (!company) {
-          throw new InvalidRelationException('User', 'Company');
+          throw new InvalidRelationException(
+            `Company with ID ${updateUserDto.companyId} not found`,
+          );
         }
       }
 
@@ -112,24 +107,11 @@ export class UsersService {
         },
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2002') {
-          throw new EntityAlreadyExistsException('User', 'email');
-        }
-      }
-      throw error;
+      PrismaErrorHandler.handle(error);
     }
   }
 
   public async remove(id: number): Promise<User> {
-    const hasAssociatedData = false;
-
-    if (hasAssociatedData) {
-      throw new BusinessRuleViolationException(
-        `Cannot delete user with ID ${id} because it has associated data`,
-      );
-    }
-
     return this.prisma.user.delete({
       where: { id },
     });

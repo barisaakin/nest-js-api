@@ -21,28 +21,28 @@ enum Role {
 }
 
 model User {
-  id            Int       @id @default(autoincrement())
-  email         String    @unique
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
   firstName     String?
   lastName      String?
-  role          Role      @default(USER)
-  recoveryToken String?   @unique
-  companyId     Int?      
-  company       Company?  @relation(fields: [companyId], references: [id])
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  role          Role     @default(USER)
+  recoveryToken String?  @unique
+  companyId     Int?
+  company       Company? @relation(fields: [companyId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@map("users")
 }
 
 model Company {
-  id                        Int      @id @default(autoincrement())
-  name                      String   @unique
-  phoneOfRepresentative     String?
-  emailOfRepresentative     String?
-  users                     User[]
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @updatedAt
+  id                    Int      @id @default(autoincrement())
+  name                  String   @unique
+  phoneOfRepresentative String?
+  emailOfRepresentative String?
+  users                 User[]
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   @@map("companies")
 }
