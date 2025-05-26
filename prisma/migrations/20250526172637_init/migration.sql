@@ -9,6 +9,7 @@ CREATE TABLE "users" (
     "lastName" TEXT,
     "role" "Role" NOT NULL DEFAULT 'USER',
     "recoveryToken" TEXT,
+    "password" TEXT,
     "companyId" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,

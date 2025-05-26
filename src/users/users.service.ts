@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -8,14 +10,17 @@ import {
   EntityNotFoundException,
   InvalidRelationException,
 } from '../common/exceptions/business.exception';
+import * as bcrypt from 'bcrypt';
+
+type UserWithCompany = User & { company: Company | null };
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  public async create(createUserDto: CreateUserDto): Promise<User & { company: Company | null }> {
+  public async create(createUserDto: CreateUserDto): Promise<UserWithCompany> {
     try {
-      const { email, firstName, lastName, companyId } = createUserDto;
+      const { email, firstName, lastName, role = Role.USER, companyId, password } = createUserDto;
 
       if (companyId) {
         const company = await this.prisma.company.findUnique({
@@ -27,11 +32,14 @@ export class UsersService {
         }
       }
 
+      const hashedPassword = await bcrypt.hash(password, 10);
+
       const userData: Prisma.UserCreateInput = {
         email,
         firstName,
         lastName,
-        role: Role.USER,
+        role,
+        password: hashedPassword,
         company: companyId
           ? {
               connect: { id: companyId },
@@ -50,7 +58,7 @@ export class UsersService {
     }
   }
 
-  public async findAll(): Promise<(User & { company: Company | null })[]> {
+  public async findAll(): Promise<UserWithCompany[]> {
     return this.prisma.user.findMany({
       include: {
         company: true,
@@ -58,7 +66,7 @@ export class UsersService {
     });
   }
 
-  public async findOne(id: number): Promise<User & { company: Company | null }> {
+  public async findOne(id: number): Promise<UserWithCompany> {
     const user = await this.prisma.user.findUnique({
       where: { id },
       include: {
@@ -73,10 +81,7 @@ export class UsersService {
     return user;
   }
 
-  public async update(
-    id: number,
-    updateUserDto: UpdateUserDto,
-  ): Promise<User & { company: Company | null }> {
+  public async update(id: number, updateUserDto: UpdateUserDto): Promise<UserWithCompany> {
     try {
       if (updateUserDto.companyId) {
         const company = await this.prisma.company.findUnique({
@@ -98,6 +103,11 @@ export class UsersService {
             }
           : undefined,
       };
+
+      // If password is being updated, hash it
+      if (updateUserDto.password) {
+        updateData.password = await bcrypt.hash(updateUserDto.password, 10);
+      }
 
       return await this.prisma.user.update({
         where: { id },
