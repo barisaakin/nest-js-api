@@ -30,6 +30,7 @@ model User {
   recoveryToken String?  @unique
   companyId     Int?
   company       Company? @relation(fields: [companyId], references: [id])
+  reports       Report[]
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -42,8 +43,56 @@ model Company {
   phoneOfRepresentative String?
   emailOfRepresentative String?
   users                 User[]
+  reports               Report[]
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
   @@map("companies")
+}
+
+model Report {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  pages       ReportPage[]
+  company     Company     @relation(fields: [companyId], references: [id])
+  companyId   Int
+  user        User        @relation(fields: [userId], references: [id])
+  userId      Int
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("reports")
+}
+
+model ReportPage {
+  id       Int          @id @default(autoincrement())
+  name     String
+  fields   ReportField[]
+  report   Report       @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  reportId Int
+
+  @@map("report_pages")
+}
+
+model ReportField {
+  id         Int        @id @default(autoincrement())
+  type       String
+  label      String
+  required   Boolean    @default(false)
+  align      String     @default("start")
+  bold       Boolean    @default(false)
+  italic     Boolean    @default(false)
+  underline  Boolean    @default(false)
+  value      String?
+  bgColor    String?    @default("")
+  fontColor  String?    @default("")
+  fontSize   Int        @default(16)
+  height     String?    @default("")
+  width      String?    @default("")
+  margin     String?    @default("")
+  page       ReportPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  pageId     Int
+
+  @@map("report_fields")
 }

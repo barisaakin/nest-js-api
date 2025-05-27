@@ -34,8 +34,8 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const accessToken = this.jwtService.sign({ userId: user.id });
-    const refreshToken = this.jwtService.sign({ userId: user.id }, { expiresIn: '7d' });
+    const accessToken = this.jwtService.sign({ userId: user.id, companyId: user.companyId });
+    const refreshToken = this.jwtService.sign({ userId: user.id, companyId: user.companyId }, { expiresIn: '7d' });
 
     return { accessToken, refreshToken };
   }
@@ -51,8 +51,8 @@ export class AuthService {
         throw new NotFoundException('User not found');
       }
 
-      const accessToken = this.jwtService.sign({ userId: user.id });
-      const refreshToken = this.jwtService.sign({ userId: user.id }, { expiresIn: '7d' });
+      const accessToken = this.jwtService.sign({ userId: user.id, companyId: user.companyId });
+      const refreshToken = this.jwtService.sign({ userId: user.id, companyId: user.companyId }, { expiresIn: '7d' });
 
       return { accessToken, refreshToken };
     } catch (error) {
