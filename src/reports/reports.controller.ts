@@ -9,9 +9,11 @@ import {
   Delete,
   UseGuards,
   Request,
+  Patch,
 } from '@nestjs/common';
 import { ReportsService } from './reports.service';
 import { CreateReportDto } from './dto/create-report.dto';
+import { UpdateReportDto } from './dto/update-report.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
@@ -68,5 +70,23 @@ export class ReportsController {
   @ApiResponse({ status: 404, description: 'Report not found.' })
   delete(@Param('id', ParseIntPipe) id: number, @Request() req) {
     return this.reportsService.delete(id, req.user.companyId);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update a report' })
+  @ApiResponse({
+    status: 200,
+    description: 'The report has been successfully updated.',
+    type: CreateReportDto,
+  })
+  @ApiResponse({ status: 400, description: 'Bad request.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({ status: 404, description: 'Report not found.' })
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateReportDto: UpdateReportDto,
+    @Request() req,
+  ) {
+    return this.reportsService.update(id, updateReportDto, req.user.companyId);
   }
 }
