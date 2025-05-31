@@ -91,6 +91,7 @@ model ReportField {
   height     String?    @default("")
   width      String?    @default("")
   margin     String?    @default("")
+  tableConfig Json?     // Stores table configuration (columns and rowCount)
   page       ReportPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
   pageId     Int
 

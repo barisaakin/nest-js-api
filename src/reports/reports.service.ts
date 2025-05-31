@@ -4,10 +4,18 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ReportsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private prepareTableConfig(field: any): Prisma.InputJsonValue | undefined {
+    if (field.type === 'table' && field.tableConfig) {
+      return field.tableConfig as Prisma.InputJsonValue;
+    }
+    return undefined;
+  }
 
   async create(createReportDto: CreateReportDto, userId: number, companyId: number) {
     try {
@@ -36,6 +44,7 @@ export class ReportsService {
                   height: field.height,
                   width: field.width,
                   margin: field.margin,
+                  tableConfig: this.prepareTableConfig(field),
                 })),
               },
             })),
@@ -171,6 +180,7 @@ export class ReportsService {
                     height: field.height,
                     width: field.width,
                     margin: field.margin,
+                    tableConfig: this.prepareTableConfig(field),
                   })),
                 },
               })),

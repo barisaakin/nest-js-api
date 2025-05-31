@@ -71,13 +71,13 @@ export class CompaniesService {
 
   public async remove(id: number): Promise<Company> {
     const company = await this.findOne(id);
-  
+
     if (company.users?.length > 0) {
       throw new BadRequestException(
         `Company cannot be deleted because it has ${company.users.length} related users.`,
       );
     }
-    
+
     return await this.prisma.company.delete({
       where: { id },
     });

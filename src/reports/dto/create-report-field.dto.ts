@@ -1,8 +1,9 @@
-import { IsString, IsBoolean, IsOptional, IsInt, Min } from 'class-validator';
+import { IsString, IsBoolean, IsOptional, IsInt, Min, IsObject } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { TableFieldDto } from './table-field.dto';
 
 export class CreateReportFieldDto {
-  @ApiProperty({ description: 'Type of the field (text, heading, textarea, number, etc.)' })
+  @ApiProperty({ description: 'Type of the field (text, heading, textarea, number, table, etc.)' })
   @IsString()
   type: string;
 
@@ -70,4 +71,13 @@ export class CreateReportFieldDto {
   @IsString()
   @IsOptional()
   margin?: string;
+
+  @ApiProperty({ 
+    description: 'Table configuration (only for type: "table")',
+    type: TableFieldDto,
+    required: false 
+  })
+  @IsObject()
+  @IsOptional()
+  tableConfig?: TableFieldDto;
 } 
